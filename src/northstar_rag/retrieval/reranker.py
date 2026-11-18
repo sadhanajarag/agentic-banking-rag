@@ -2,6 +2,7 @@
 
 from functools import cache
 
+import torch
 from langchain_classic.retrievers import ContextualCompressionRetriever
 from langchain_classic.retrievers.document_compressors import CrossEncoderReranker
 from langchain_community.cross_encoders import HuggingFaceCrossEncoder
@@ -10,10 +11,27 @@ from northstar_rag.config import settings
 from northstar_rag.retrieval.hybrid import build_hybrid_retriever
 
 
+class FastCrossEncoder(HuggingFaceCrossEncoder):
+    """HuggingFaceCrossEncoder that scores in small batches, without a progress bar.
+
+    LangChain's version always uses batches of 32. Every pair in a batch is padded
+    to the longest one (up to 512 tokens), so big batches waste most of the CPU time.
+    """
+
+    def score(self, text_pairs: list[tuple[str, str]]) -> list[float]:
+        """Return one relevance score per (question, chunk) pair."""
+        scores = self.client.predict(
+            text_pairs, batch_size=settings.rerank_batch_size, show_progress_bar=False
+        )
+        return scores.tolist()
+
+
 @cache  # @cache = remember the result, so the model loads only once
 def get_reranker() -> CrossEncoderReranker:
     """Load the reranker model only once, then reuse it."""
-    model = HuggingFaceCrossEncoder(model_name=settings.reranker_model)
+    # Applies to the whole process; only the reranker uses torch in this app
+    torch.set_num_threads(settings.torch_threads)
+    model = FastCrossEncoder(model_name=settings.reranker_model)
     return CrossEncoderReranker(model=model, top_n=settings.rerank_top_n)
 
 

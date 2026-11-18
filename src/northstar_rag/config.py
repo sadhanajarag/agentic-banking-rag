@@ -40,8 +40,11 @@ class Settings(BaseSettings):
     vector_weight: float = Field(0.6, ge=0, le=1)
 
     # Reranker
-    reranker_model: str = "BAAI/bge-reranker-base"
+    # MiniLM-L6: ~9x faster on CPU than BAAI/bge-reranker-base, similar top-4 quality
+    reranker_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
     rerank_top_n: int = Field(4, gt=0)
+    rerank_batch_size: int = Field(8, gt=0)   # small batches = less padding = faster on CPU
+    torch_threads: int = Field(6, gt=0)       # measured: 6 beats 10 here; tune per machine
 
     # Web search (Tavily)
     tavily_api_key: str = Field(min_length=1)
