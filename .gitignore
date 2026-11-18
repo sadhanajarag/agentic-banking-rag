@@ -1,0 +1,19 @@
+# secrets
+.env
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+build/
+dist/
+
+# generated artifacts (rebuilt by scripts/build_index.py)
+vector_db/
+
+# notebooks / editors
+.ipynb_checkpoints/
+.vscode/
+.idea/
