@@ -2,6 +2,7 @@
 
 from .classifier import GUIDES, Domain, DomainResult, classify_domain, domain_to_source
 from .client import get_llm
+from .contextualizer import contextualize_question
 from .generator import FALLBACK_ANSWER, format_context, generate_answer
 from .grader import GradeResult, grade_documents
 from .rewriter import rewrite_question
@@ -17,6 +18,7 @@ __all__ = [
     "Route",
     "RouteResult",
     "classify_domain",
+    "contextualize_question",
     "domain_to_source",
     "format_context",
     "generate_answer",

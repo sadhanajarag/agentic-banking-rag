@@ -2,8 +2,13 @@
 
 Main graph (built by build_graph):
 
-    START -> router --"retrieval_agent"--> retrieval_agent -> END   (NorthStar Bank questions)
-                    --"web_search"-------> web_search ------> END   (everything else)
+    START -> contextualize -> router --"retrieval_agent"--> retrieval_agent --+
+                                     --"web_search"-------> web_search -------+
+                                                                              v
+                                                          save_answer -> END
+
+    contextualize: makes follow-ups standalone using the saved conversation
+    save_answer:   appends the answer to the conversation
 
 retrieval_agent sub-graph (built by build_retrieval_agent) - the RAG loop with retries:
 
@@ -17,18 +22,21 @@ retrieval_agent sub-graph (built by build_retrieval_agent) - the RAG loop with r
 
 from typing import Any, Literal
 
+from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
 from northstar_rag.config import settings
 from northstar_rag.graph.nodes import (
     classify_node,
+    contextualize_node,
     fallback_node,
     generate_node,
     grade_node,
     retrieve_node,
     rewrite_node,
     router_node,
+    save_answer_node,
     web_search_node,
 )
 from northstar_rag.graph.state import GraphState, initial_state
@@ -88,28 +96,36 @@ def build_retrieval_agent() -> CompiledStateGraph:
     return graph.compile()
 
 
-def build_graph() -> CompiledStateGraph:
-    """Build the main graph: router -> retrieval_agent (bank guides) or web_search (Tavily)."""
+def build_graph(checkpointer: BaseCheckpointSaver | None = None) -> CompiledStateGraph:
+    """Build the main graph: contextualize -> router -> retrieval_agent / web_search -> save.
+
+    checkpointer = where the conversation is saved per session (thread_id).
+    None = no memory between calls (used by ask() and the tests).
+    """
     graph = StateGraph(GraphState)
 
+    graph.add_node("contextualize", contextualize_node)
     graph.add_node("router", router_node)
     # A compiled graph can be used as a node. It shares GraphState with the
     # main graph, so its result flows straight back into the main state.
     graph.add_node("retrieval_agent", build_retrieval_agent())
     graph.add_node("web_search", web_search_node)
+    graph.add_node("save_answer", save_answer_node)
 
-    graph.add_edge(START, "router")
+    graph.add_edge(START, "contextualize")
+    graph.add_edge("contextualize", "router")
     graph.add_conditional_edges("router", decide_route, ["retrieval_agent", "web_search"])
-    graph.add_edge("retrieval_agent", END)
-    graph.add_edge("web_search", END)
+    graph.add_edge("retrieval_agent", "save_answer")
+    graph.add_edge("web_search", "save_answer")
+    graph.add_edge("save_answer", END)
 
-    return graph.compile()
+    return graph.compile(checkpointer=checkpointer)
 
 
 def ask(question: str) -> dict[str, Any]:
-    """Run one question through the whole graph and return the final state.
+    """Run one question (no memory) and return the final state.
 
-    Convenience helper: it compiles the graph on every call. Long-running
-    code (like the CLI) should call build_graph() once and reuse it.
+    Convenience helper for notebooks and tests: it compiles the graph on every
+    call. Apps should use ChatService, which compiles once and keeps memory.
     """
     return build_graph().invoke(initial_state(question))

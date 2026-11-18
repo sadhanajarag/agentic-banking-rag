@@ -47,6 +47,12 @@ class Settings(BaseSettings):
     tavily_api_key: str = Field(min_length=1)
     web_search_results: int = Field(3, gt=0)
 
+    # Chat / app
+    chat_db_path: Path = PROJECT_ROOT / "storage" / "chat_memory.sqlite"  # chat memory
+    history_messages: int = Field(6, gt=0)       # earlier messages used to understand follow-ups
+    max_question_chars: int = Field(1000, gt=0)  # reject very long input
+    log_level: str = "INFO"
+
     # Graph
     max_rewrites: int = Field(3, ge=0)
 

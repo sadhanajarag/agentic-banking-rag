@@ -10,7 +10,8 @@ PROMPT = ChatPromptTemplate.from_messages([
      "Answer the question using ONLY the numbered web results below.\n"
      "- Cite sources inline as [1], [2].\n"
      "- If the results don't answer it, say you couldn't find a reliable answer.\n"
-     "- Be concise.\n\nWeb results:\n{results}"),
+     "- Be concise.\n"
+     "- End with the URLs of the sources you cited.\n\nWeb results:\n{results}"),
     ("human", "{question}"),
 ])
 

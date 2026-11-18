@@ -12,6 +12,8 @@ dist/
 
 # generated artifacts (rebuilt by: uv run python -m northstar_rag.ingestion.pipeline)
 vector_db/
+# chat memory (SQLite)
+storage/
 
 # notebooks / editors
 .ipynb_checkpoints/
