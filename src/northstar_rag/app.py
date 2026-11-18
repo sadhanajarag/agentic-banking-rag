@@ -2,6 +2,7 @@
 
 
 def main() -> None:
+    """Entry point for the `northstar-rag` command."""
     print("northstar-rag: scaffolding OK (graph not built yet)")
 
 

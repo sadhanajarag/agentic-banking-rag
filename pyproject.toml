@@ -24,12 +24,14 @@ dependencies = [
     "chromadb>=1.0",
     "rank-bm25>=0.2.2",
     "sentence-transformers>=3.0",
+    "langchain-tavily>=0.2.18",
 ]
 
 [dependency-groups]
 dev = [
     "pytest>=8.0",
     "ipykernel>=6.0",
+    "ruff>=0.17.5",
 ]
 
 [project.scripts]
@@ -45,3 +47,12 @@ packages = ["src/northstar_rag"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+# E/W = PEP 8 style, F = real errors (unused names, typos), I = import order,
+# B = common bugs, UP = modern Python syntax, SIM = simpler code
+select = ["E", "W", "F", "I", "B", "UP", "SIM"]

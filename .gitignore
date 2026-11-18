@@ -10,10 +10,17 @@ __pycache__/
 build/
 dist/
 
-# generated artifacts (rebuilt by scripts/build_index.py)
+# generated artifacts (rebuilt by: uv run python -m northstar_rag.ingestion.pipeline)
 vector_db/
 
 # notebooks / editors
 .ipynb_checkpoints/
 .vscode/
 .idea/
+
+# Office / Windows temp files
+~$*
+*.tmp
+
+# local planning docs
+phase1_plan.docx
